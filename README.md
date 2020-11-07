@@ -1,2 +1,2 @@
 # CrudSQLite
-CRUD Sqlite utilizando Typescript
+CRUD Sqlite utilizando Javascript
