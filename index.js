@@ -1,12 +1,26 @@
-class Banco {
+import executar from './rodarSql'
+
+const porcentagem = (total, atual) => {
+  const p = (atual / total) * 100
+  return p.toFixed(2)
+}
+
+export default class Banco {
   constructor() {
     this.tabela
     this.coluna
+    this.mensagem
     this.chaves = []
     this.chavesPrimarias
     this.colunasString = ''
     this.colunasStringIns = ''
     this.valores = []
+  }
+
+  imprimirMensagem = (msg) => {
+    if (this.mensagem && typeof this.mensagem === 'function') {
+      this.mensagem(msg)
+    }
   }
 
   // Iniciar interação
@@ -33,31 +47,7 @@ class Banco {
     }
   }
 
-  // Executar query
-  executar = (query, valores) => {
-    // const trataRetorno = (array) => {
-    //     if (!array) return ''
-
-    //     switch (array?.length) {
-    //         case 0: return ''
-    //         case 1: return array[0]
-    //         default: array
-    //     }
-    // }
-
-    // return new Promise(async (sucesso, erro) => {
-    //     const bancoAtual = await AbrirBanco()
-    //     bancoAtual.transaction(sessao => {
-    //         sessao.executeSql(
-    //             query,
-    //             valores || [],
-    //             (_, obj) => sucesso(trataRetorno(obj?.rows?._array)),
-    //             (_, obj) => {erro(obj); console.log('ERRO NO SQL -> ', obj)})
-    //     })
-    // })
-    console.log(query, valores)
-    return false
-  }
+  executar = executar
 
   // ##############################################
 
@@ -120,9 +110,15 @@ class Banco {
   }
 
   // Sincronizar dado
-  sincronizar = async (array) => {
+  sincronizar = async (array, mensagem) => {
+    if (mensagem) {
+      this.mensagem = mensagem
+    }
 
     if (array?.length > 0) {
+      const fila = array.length
+      let i = 0
+
       for (const obj of array) {
 
         // Verifica chaves primárias (para buscar e modificar)
@@ -144,68 +140,12 @@ class Banco {
           await this.inserir() // Caso não exista, cria
         }
 
+        i++
+        this.imprimirMensagem(`${this.apelido || this.tabela}: ${porcentagem(fila, i)}%`)
+
       }
     }
 
   }
 
 }
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-const colunas = {
-  CorCod: undefined,
-  CorNome: undefined,
-  CorAtivoInativo: undefined,
-  CorHexa: undefined,
-  CorImg: undefined
-}
-
-class Cor extends Banco {
-
-  constructor(atributos) {
-    super()
-
-    this.tabela = 'Cor'
-    this.base = colunas
-    this.coluna = atributos
-    this.chavesPrimarias = ['CorCod']
-
-    this.init() // Iniciar
-  }
-
-  // Extras
-
-}
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-class CorService extends Cor {
-  constructor(atributos) {
-    super(atributos)
-  }
-
-  inserir = async () => {
-      return await new Cor({...this.coluna, CorImg: 'teste'}).inserir()
-  }
-
-  // atualizar = async () => {
-  //     return await new Cor(this.atributos).atualizar()
-  // }
-
-
-}
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-const teste = new CorService()
-
-teste.sincronizar([{
-  CorCod: 1,
-  CorNome: 'teste',
-  CorAtivoInativo: 'A',
-  CorHexa: '#000',
-  CorImg: '',
-  Teste: 'AAAAAAAAAAAA'
-}])
-
